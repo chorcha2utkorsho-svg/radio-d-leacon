@@ -1,11 +1,36 @@
-<div align="center">
+# রেডিও ডি-লিকন (Radio D-Leacon) 📻
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+সহজ অনলাইন লাইভ ও শিডিউলড অডিও স্ট্রিমিং রেডিও স্টেশন প্ল্যাটফর্ম।
 
-  <h1>Built with AI Studio</h2>
+## 🌟 প্রধান সুবিধাসমূহ (Key Features)
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- **অনলাইন লাইভ স্ট্রিমিং:** রিয়েল-টাইম অডিও ব্রডকাস্টিং ও ৬০fps ক্যানভাস ভিজ্যুয়ালাইজার।
+- **লাইভ আরজে মাইক্রোফোন:** ব্রাউজারের মাইক্রোফোন দিয়ে সরাসরি অন-এয়ার সম্প্রচার, রিয়েল-টাইম VU পিক মিটার ও অটো-ডাকিং (Auto-Ducking)।
+- **স্টুডিও সাউন্ডবোর্ড:** স্টেশন সিগনেচার টিউন, করতালি, সংকেত ঘণ্টা ও রেডিও সুইপ ইফেক্ট।
+- **অগ্রিম প্রোগ্রাম শিডিউলার (Advance Scheduler):** সাপ্তাহিক ও দৈনিক নির্দিষ্ট সময়ে স্বয়ংক্রিয়ভাবে লাইভ ও রেকর্ডেড শো সম্প্রচার।
+- **নির্দিষ্ট অধিবেশন ও মাল্টি-ট্র্যাক আপলোড:** যেকোনো অনুষ্ঠানের নাম দিয়ে সেই অধিবেশনে একসাথে কয়েকটি গান (.mp3, .wav) আপলোড ও ধারাবাহিক প্লেলিস্ট আকারে সম্প্রচার।
+- **শ্রোতা সংযোগ:** গানের অনুরোধ জমা দেওয়া ও অনুমোদন ইনবক্স, লাইভ স্টুডিও চ্যাট ও প্রতিক্রিয়া।
+- **অফলাইন পারসিস্টেন্স:** ব্রাউজারের IndexedDB-তে আপলোডকৃত অডিও সংরক্ষণ।
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## 🚀 লোকাল সেটআপ ও রান (Setup & Run)
 
-</div>
+```bash
+# ডিপেন্ডেন্সি ইনস্টল করুন
+npm install
+
+# ডেভেলপমেন্ট সার্ভার চালু করুন
+npm run dev
+```
+
+ব্রাউজারে ওপেন করুন: `http://localhost:3000`
+
+## 🛠️ প্রযুক্তি (Tech Stack)
+
+- **Frontend:** React 19, TypeScript, Tailwind CSS, Lucide Icons, Motion
+- **Audio Engine:** Web Audio API, AnalyserNode, MediaStream Audio, MediaRecorder
+- **Storage:** IndexedDB, LocalStorage
+- **Build Tool:** Vite
+
+---
+
+© রেডিও ডি-লিকন | সর্বস্বত্ব সংরক্ষিত।
