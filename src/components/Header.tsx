@@ -8,7 +8,7 @@ interface HeaderProps {
   onToggleStudioMode: () => void;
   isOnAir: boolean;
   listenerCount: number;
-  onOpenUpload?: () => void;
+  isBroadcasterAuthenticated?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleStudioMode,
   isOnAir,
   listenerCount,
-  onOpenUpload,
+  isBroadcasterAuthenticated = false,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
@@ -118,28 +118,19 @@ export const Header: React.FC<HeaderProps> = ({
             <span>শ্রোতা যুক্ত</span>
           </div>
 
-          {onOpenUpload && (
-            <button
-              onClick={onOpenUpload}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 border border-amber-500/30 transition-all cursor-pointer whitespace-nowrap shrink-0"
-              title="অডিও ফাইল আপলোড করে সম্প্রচার করুন"
-            >
-              <Upload className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">অডিও ফাইল</span>
-              <span>আপলোড</span>
-            </button>
-          )}
-
           <button
             onClick={onToggleStudioMode}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               isStudioMode
                 ? 'bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-md shadow-amber-500/20'
-                : 'bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white border border-slate-700/80'
+                : isBroadcasterAuthenticated
+                ? 'bg-slate-800 text-amber-300 hover:bg-slate-700 border border-amber-500/30'
+                : 'bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800'
             }`}
+            title={isStudioMode ? 'শ্রোতা প্লেয়ারে ফিরে যান' : 'ব্রডকাস্টার ও আরজে কন্ট্রোল ড্যাশবোর্ডে প্রবেশ'}
           >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>{isStudioMode ? 'শ্রোতা প্লেয়ারে ফিরুন' : 'স্টুডিও কন্ট্রোল রুম'}</span>
+            <Sliders className="w-3.5 h-3.5 text-amber-400" />
+            <span>{isStudioMode ? 'শ্রোতা প্লেয়ার' : 'আরজে ড্যাশবোর্ড'}</span>
           </button>
         </div>
       </div>

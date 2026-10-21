@@ -385,17 +385,6 @@ export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
               {/* Interaction Strip: Song Request, Live Chat, Reaction, Share */}
               <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-slate-800/60 text-xs">
                 <div className="flex flex-wrap items-center gap-2">
-                  {onOpenUpload && (
-                    <button
-                      onClick={onOpenUpload}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 rounded-lg transition-colors cursor-pointer border border-amber-500/40 font-semibold"
-                      title="নিজের অডিও ফাইল আপলোড করে সম্প্রচার করুন"
-                    >
-                      <Upload className="w-3.5 h-3.5 text-amber-400" />
-                      <span>অডিও ফাইল আপলোড</span>
-                    </button>
-                  )}
-
                   <button
                     onClick={onOpenRequests}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors cursor-pointer border border-slate-700/60"

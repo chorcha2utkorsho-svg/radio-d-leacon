@@ -3,6 +3,8 @@ import { Header } from './components/Header';
 import { MainTunerPlayer } from './components/Player/MainTunerPlayer';
 import { ScheduleTimeline } from './components/Schedule/ScheduleTimeline';
 import { StudioConsole } from './components/Studio/StudioConsole';
+import { BroadcasterDashboard } from './components/Studio/BroadcasterDashboard';
+import { BroadcasterAuthModal } from './components/Auth/BroadcasterAuthModal';
 import { ScheduleManagerModal } from './components/Studio/ScheduleManagerModal';
 import { SongRequestModal } from './components/Requests/SongRequestModal';
 import { LiveListenerChat } from './components/Chat/LiveListenerChat';
@@ -60,8 +62,15 @@ export default function App() {
   const [bitrate, setBitrate] = useState<'128k' | '320k' | 'lossless'>('320k');
   const [listenerCount, setListenerCount] = useState<number>(248);
 
-  // Studio Controls
+  // Studio Controls & Authentication
   const [isStudioMode, setIsStudioMode] = useState<boolean>(false);
+  const [isBroadcasterAuthenticated, setIsBroadcasterAuthenticated] = useState<boolean>(() => {
+    return (
+      localStorage.getItem('radio_dleacon_auth_token') === 'broadcaster_authenticated' ||
+      sessionStorage.getItem('radio_dleacon_auth_token') === 'broadcaster_authenticated'
+    );
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [autoDucking, setAutoDucking] = useState<boolean>(true);
   const [micGain, setMicGain] = useState<number>(1.0);
   const [musicVolume, setMusicVolume] = useState<number>(0.8);
@@ -241,6 +250,32 @@ export default function App() {
     }
   };
 
+  // Broadcaster Studio Mode & Authentication Handlers
+  const handleToggleStudio = () => {
+    if (isStudioMode) {
+      setIsStudioMode(false);
+    } else {
+      if (isBroadcasterAuthenticated) {
+        setIsStudioMode(true);
+      } else {
+        setIsAuthModalOpen(true);
+      }
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsBroadcasterAuthenticated(true);
+    setIsAuthModalOpen(false);
+    setIsStudioMode(true);
+  };
+
+  const handleBroadcasterLogout = () => {
+    localStorage.removeItem('radio_dleacon_auth_token');
+    sessionStorage.removeItem('radio_dleacon_auth_token');
+    setIsBroadcasterAuthenticated(false);
+    setIsStudioMode(false);
+  };
+
   // Play specific track or program
   const handlePlayProgram = (prog: ScheduledProgram) => {
     setCurrentProgram(prog);
@@ -411,30 +446,37 @@ export default function App() {
           setCurrentTab(tab);
         }}
         isStudioMode={isStudioMode}
-        onToggleStudioMode={() => setIsStudioMode((prev) => !prev)}
+        onToggleStudioMode={handleToggleStudio}
         isOnAir={isOnAir}
         listenerCount={listenerCount}
-        onOpenUpload={() => setIsUploadModalOpen(true)}
+        isBroadcasterAuthenticated={isBroadcasterAuthenticated}
       />
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
         {/* If in Broadcaster Studio Mode */}
         {isStudioMode ? (
-          <StudioConsole
+          <BroadcasterDashboard
             isOnAir={isOnAir}
             onToggleOnAir={handleToggleOnAir}
             isLiveMicActive={isLiveMicActive}
             onToggleLiveMic={handleToggleLiveMic}
             currentProgram={currentProgram}
+            currentTrack={currentTrack}
+            sessionTracks={sessionTracks}
+            currentTrackIndex={currentTrackIndex}
+            onNextTrack={handleNextTrackInSession}
+            onPrevTrack={handlePrevTrackInSession}
+            onSelectSessionTrack={handleSelectSessionTrack}
             schedules={schedules}
             onOpenAddSchedule={() => setIsScheduleModalOpen(true)}
             onDeleteSchedule={handleDeleteSchedule}
             tracks={tracks}
-            onUploadTrack={handleUploadTrack}
             onOpenUploadModal={() => setIsUploadModalOpen(true)}
             requests={requests}
             onUpdateReqStatus={handleUpdateReqStatus}
+            chatMessages={chatMessages}
+            onSendMessage={handleSendMessage}
             autoDucking={autoDucking}
             onToggleAutoDucking={handleToggleAutoDucking}
             micGain={micGain}
@@ -442,10 +484,16 @@ export default function App() {
             musicVolume={musicVolume}
             onChangeMusicVolume={handleMusicVolumeChange}
             onSelectTrackToPlay={(track) => {
+              setSessionTracks([track]);
+              setCurrentTrackIndex(0);
               setCurrentTrack(track);
+              audioEngine.setMasterVolume(volume);
               audioEngine.playTrack(track.synthTheme || 'morning_raga', track.audioUrl);
               setIsPlaying(true);
             }}
+            listenerCount={listenerCount}
+            onViewListenerPortal={() => setIsStudioMode(false)}
+            onLogout={handleBroadcasterLogout}
           />
         ) : (
           <>
@@ -467,7 +515,6 @@ export default function App() {
                   onOpenRequests={() => setIsRequestModalOpen(true)}
                   onOpenChat={() => setCurrentTab('requests')}
                   onViewSchedule={() => setCurrentTab('schedule')}
-                  onOpenUpload={() => setIsUploadModalOpen(true)}
                   nextProgram={upcomingPrograms[0]}
                   sessionTracks={sessionTracks}
                   currentTrackIndex={currentTrackIndex}
@@ -534,7 +581,7 @@ export default function App() {
                     <LiveListenerChat
                       messages={chatMessages}
                       onSendMessage={handleSendMessage}
-                      isStudioMode={isStudioMode}
+                      isStudioMode={false}
                     />
                   </div>
                 </div>
@@ -547,7 +594,6 @@ export default function App() {
                 schedules={schedules}
                 currentProgramId={currentProgram.id}
                 onPlayProgram={handlePlayProgram}
-                onOpenAddSchedule={() => setIsScheduleModalOpen(true)}
               />
             )}
 
@@ -558,7 +604,6 @@ export default function App() {
                 onPlayTrack={handlePlayTrackOnDemand}
                 currentTrackId={currentTrack.id}
                 isPlaying={isPlaying}
-                onOpenUpload={() => setIsUploadModalOpen(true)}
               />
             )}
 
@@ -603,7 +648,7 @@ export default function App() {
                   <LiveListenerChat
                     messages={chatMessages}
                     onSendMessage={handleSendMessage}
-                    isStudioMode={isStudioMode}
+                    isStudioMode={false}
                   />
                 </div>
               </div>
@@ -611,6 +656,13 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* Broadcaster Security Passcode Gate */}
+      <BroadcasterAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
 
       {/* Modals */}
       <ScheduleManagerModal
