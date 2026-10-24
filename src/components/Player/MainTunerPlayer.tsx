@@ -176,6 +176,26 @@ export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
               </div>
             </div>
 
+            {/* Tap-to-Listen Action Overlay for Mobile & Desktop Listeners */}
+            {!isPlaying && (
+              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 bg-black/40 backdrop-blur-[2px]">
+                <button
+                  type="button"
+                  onClick={onTogglePlay}
+                  className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-amber-500/50 shadow-2xl transition-all cursor-pointer group active:scale-95"
+                  aria-label="রেডিও শুনতে ট্যাপ করুন"
+                >
+                  <div className="w-16 h-16 rounded-full bg-amber-500 group-hover:bg-amber-400 text-slate-950 flex items-center justify-center shadow-lg shadow-amber-500/40 group-hover:scale-105 transition-transform animate-pulse">
+                    <Play className="w-8 h-8 fill-current ml-1" />
+                  </div>
+                  <span className="text-xs font-bold text-amber-300 tracking-wide flex items-center gap-1.5">
+                    <span>সরাসরি শুনতে এখানে ট্যাপ করুন</span>
+                    <span className="text-amber-400">▶</span>
+                  </span>
+                </button>
+              </div>
+            )}
+
             {/* Bottom Vinyl & Visualizer preview */}
             <div className="relative z-10 pt-16">
               <div className="h-14 w-full bg-slate-950/70 backdrop-blur-md rounded-xl p-2 border border-white/10 flex items-center gap-3">
