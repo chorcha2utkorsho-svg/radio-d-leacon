@@ -10,6 +10,7 @@ interface HeaderProps {
   listenerCount: number;
   isBroadcasterAuthenticated?: boolean;
   onOpenCMS?: () => void;
+  onOpenUploadModal?: () => void;
   onOpenNotifications?: () => void;
   activeReminderCount?: number;
 }
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   listenerCount,
   isBroadcasterAuthenticated = false,
   onOpenCMS,
+  onOpenUploadModal,
   onOpenNotifications,
   activeReminderCount = 0,
 }) => {
@@ -149,6 +151,18 @@ export const Header: React.FC<HeaderProps> = ({
               <Upload className="w-3.5 h-3.5 text-amber-400" />
               <span className="hidden sm:inline">স্টেশন সিএমএস</span>
               <span className="sm:hidden">CMS</span>
+            </button>
+          )}
+
+          {onOpenUploadModal && (
+            <button
+              onClick={onOpenUploadModal}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-sm shadow-amber-500/10"
+              title="নতুন অধিবেশন ও গান সরাসরি আপলোড করুন"
+            >
+              <Upload className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">+ গান আপলোড</span>
+              <span className="sm:hidden">+ আপলোড</span>
             </button>
           )}
 

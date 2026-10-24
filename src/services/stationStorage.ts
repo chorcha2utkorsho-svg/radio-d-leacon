@@ -354,3 +354,54 @@ export function saveStationSettings(settings: StationSettings) {
     // ignore
   }
 }
+
+const SESSION_QUEUE_KEY = 'radio_dleacon_session_queue';
+const AUTOPILOT_ACTIVE_KEY = 'radio_dleacon_autopilot_active';
+
+export function saveActiveSessionQueue(trackIds: string[], currentIndex: number) {
+  try {
+    localStorage.setItem(
+      SESSION_QUEUE_KEY,
+      JSON.stringify({ trackIds, currentIndex, timestamp: Date.now() })
+    );
+  } catch {
+    // ignore
+  }
+}
+
+export function loadActiveSessionQueue(): { trackIds: string[]; currentIndex: number } | null {
+  try {
+    const raw = localStorage.getItem(SESSION_QUEUE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.trackIds) && parsed.trackIds.length > 0) {
+        return {
+          trackIds: parsed.trackIds,
+          currentIndex: typeof parsed.currentIndex === 'number' ? parsed.currentIndex : 0,
+        };
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+export function saveAutoPilotState(isActive: boolean) {
+  try {
+    localStorage.setItem(AUTOPILOT_ACTIVE_KEY, JSON.stringify(isActive));
+  } catch {
+    // ignore
+  }
+}
+
+export function loadAutoPilotState(): boolean {
+  try {
+    const raw = localStorage.getItem(AUTOPILOT_ACTIVE_KEY);
+    if (raw) return JSON.parse(raw) === true;
+  } catch {
+    // ignore
+  }
+  return false;
+}
+

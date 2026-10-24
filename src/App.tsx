@@ -34,6 +34,10 @@ import {
   saveRequests,
   loadSavedStationSettings,
   saveStationSettings,
+  saveActiveSessionQueue,
+  loadActiveSessionQueue,
+  saveAutoPilotState,
+  loadAutoPilotState,
   INITIAL_CHAT_MESSAGES,
   getCurrentProgramFromSchedule,
   getUpcomingPrograms,
@@ -69,9 +73,22 @@ export default function App() {
     return matchedTrack || tracks[0];
   });
 
-  // Multi-song session playlist queue
-  const [sessionTracks, setSessionTracks] = useState<AudioTrack[]>([currentTrack]);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
+  // Multi-song session playlist queue with persistence
+  const [sessionTracks, setSessionTracks] = useState<AudioTrack[]>(() => {
+    const savedQueue = loadActiveSessionQueue();
+    const allTracks = loadSavedTracks();
+    if (savedQueue && savedQueue.trackIds.length > 0) {
+      const matched = allTracks.filter((t) => savedQueue.trackIds.includes(t.id));
+      if (matched.length > 0) return matched;
+    }
+    const prog = getCurrentProgramFromSchedule(schedules);
+    const matchedTrack = allTracks.find((t) => t.id === prog.trackId);
+    return [matchedTrack || allTracks[0]];
+  });
+  const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(() => {
+    const savedQueue = loadActiveSessionQueue();
+    return savedQueue?.currentIndex || 0;
+  });
 
   // Audio & Playback Controls
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -81,7 +98,7 @@ export default function App() {
   const [volume, setVolume] = useState<number>(0.85);
   const [bitrate, setBitrate] = useState<'128k' | '320k' | 'lossless'>('320k');
   const [listenerCount, setListenerCount] = useState<number>(248);
-  const [isAutoPilotActive, setIsAutoPilotActive] = useState<boolean>(false);
+  const [isAutoPilotActive, setIsAutoPilotActive] = useState<boolean>(loadAutoPilotState);
 
   // Studio Controls & Authentication
   const [isStudioMode, setIsStudioMode] = useState<boolean>(false);
@@ -111,13 +128,27 @@ export default function App() {
   // Station Settings
   const [stationSettings, setStationSettings] = useState<StationSettings>(loadSavedStationSettings);
 
+  // Persist active session queue and AutoPilot mode
+  useEffect(() => {
+    if (sessionTracks.length > 0) {
+      saveActiveSessionQueue(
+        sessionTracks.map((t) => t.id),
+        currentTrackIndex
+      );
+    }
+  }, [sessionTracks, currentTrackIndex]);
+
+  useEffect(() => {
+    saveAutoPilotState(isAutoPilotActive);
+  }, [isAutoPilotActive]);
+
   // Re-hydrate any uploaded audio blobs from IndexedDB
   useEffect(() => {
     const rehydrateBlobs = async () => {
       let hasChanges = false;
       const updated = await Promise.all(
         tracks.map(async (t) => {
-          if (t.isUploaded && t.id.startsWith('track-user-')) {
+          if (t.isUploaded && (t.id.startsWith('track-user-') || t.id.startsWith('track-upload-') || t.id.startsWith('track-cms-'))) {
             const blob = await getAudioBlob(t.id);
             if (blob) {
               hasChanges = true;
@@ -129,6 +160,17 @@ export default function App() {
       );
       if (hasChanges) {
         setTracks(updated);
+        // Also update sessionTracks and currentTrack with fresh blob URLs!
+        setSessionTracks((prev) =>
+          prev.map((st) => {
+            const found = updated.find((u) => u.id === st.id);
+            return found ? found : st;
+          })
+        );
+        setCurrentTrack((prev) => {
+          const found = updated.find((u) => u.id === prev.id);
+          return found ? found : prev;
+        });
       }
     };
     rehydrateBlobs();
@@ -137,6 +179,11 @@ export default function App() {
   // Automated Schedule Tick
   useEffect(() => {
     const checkSchedule = () => {
+      // CRITICAL: When AutoPilot continuous replay is active, do NOT override with default raga!
+      if (isAutoPilotActive) {
+        return;
+      }
+
       const active = getCurrentProgramFromSchedule(schedules);
       if (active.id !== currentProgram.id) {
         setCurrentProgram(active);
@@ -172,7 +219,7 @@ export default function App() {
     // check immediately and every 30 seconds
     const interval = setInterval(checkSchedule, 30000);
     return () => clearInterval(interval);
-  }, [schedules, currentProgram.id, tracks, isPlaying]);
+  }, [schedules, currentProgram.id, tracks, isPlaying, isAutoPilotActive]);
 
   // Listener count natural oscillation
   useEffect(() => {
@@ -725,6 +772,7 @@ export default function App() {
         listenerCount={listenerCount}
         isBroadcasterAuthenticated={isBroadcasterAuthenticated}
         onOpenCMS={handleOpenCMS}
+        onOpenUploadModal={() => setIsUploadModalOpen(true)}
         onOpenNotifications={() => setIsNotificationModalOpen(true)}
         activeReminderCount={notificationSettings.subscribedProgramIds.length}
       />
@@ -824,6 +872,7 @@ export default function App() {
                   onOpenRequests={() => setIsRequestModalOpen(true)}
                   onOpenChat={() => setCurrentTab('requests')}
                   onViewSchedule={() => setCurrentTab('schedule')}
+                  onOpenUpload={() => setIsUploadModalOpen(true)}
                   nextProgram={upcomingPrograms[0]}
                   isNextProgramReminderSet={
                     upcomingPrograms[0]
