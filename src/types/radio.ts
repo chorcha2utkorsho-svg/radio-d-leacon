@@ -22,6 +22,7 @@ export interface StationSettings {
   contactEmail: string;
   contactPhone: string;
   websiteUrl: string;
+  customStreamUrl?: string; // 24/7 live stream or cloud audio URL (e.g. Zeno.fm / Icecast / hosted mp3)
 }
 
 export interface ScheduledProgram {

@@ -1645,6 +1645,39 @@ export const RadioCMSModal: React.FC<RadioCMSModalProps> = ({
                   </div>
                 </div>
 
+                {/* 24/7 Universal Live Audio Stream (Zeno.fm / Icecast / Online MP3) */}
+                <div className="p-5 rounded-2xl bg-slate-950/80 border border-amber-500/40 space-y-4 shadow-lg shadow-amber-500/5">
+                  <div className="flex items-center gap-2.5 pb-2 border-b border-slate-800">
+                    <Radio className="w-5 h-5 text-amber-400" />
+                    <div>
+                      <h3 className="text-sm font-bold text-white">
+                        সার্বজনীন লাইভ ব্রডকাস্ট স্ট্রিম URL (24/7 Universal Live Stream)
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        যে কোনো ফ্রি রেডিও সার্ভার (যেমন Zeno.fm, Icecast, বা অনলাইন এমপি৩ লিঙ্ক) দিলে বিশ্বের সকল শ্রোতা তাদের মোবাইলে একই লাইভ রেডিও শুনতে পাবে
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-amber-300 mb-1">
+                      অনলাইন লাইভ স্ট্রিম বা অডিও URL (Zeno.fm / Icecast / MP3 Stream Link)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="যেমন: https://stream.zeno.fm/xyz123 অথবা https://your-server.com/stream.mp3"
+                      value={tempSettings.customStreamUrl || ''}
+                      onChange={(e) =>
+                        setTempSettings({ ...tempSettings, customStreamUrl: e.target.value })
+                      }
+                      className="w-full px-3 py-2 bg-slate-900 border border-amber-500/50 rounded-lg text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-amber-400 font-mono"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
+                      💡 <strong>১০০% ফ্রি সুবিধা:</strong> Zeno.fm বা Caster.fm-এ বিনামূল্যে অ্যাকাউন্ট খুলে আপনার গানগুলো দিলে তারা একটি ২৪ ঘণ্টার ফ্রি স্ট্রিমিং লিঙ্ক দেয়। সেই লিঙ্কটি এখানে দিয়ে সেভ করলেই বিশ্বের যেকোনো মোবাইল বা পিসি থেকে ঢুকলে সরাসরি রেডিও শোনা যাবে।
+                    </p>
+                  </div>
+                </div>
+
                 {/* Auto-Pilot Continuous Playback Section */}
                 <div className="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-4">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-800">

@@ -487,18 +487,20 @@ export default function App() {
     };
   }, [handleNextTrackInSession]);
 
-  // Play / Pause Stream
-  const handleTogglePlay = useCallback(() => {
+  // Play / Pause Stream with robust mobile unlock
+  const handleTogglePlay = useCallback(async () => {
     if (isPlaying) {
       audioEngine.stopMusic();
       setIsPlaying(false);
     } else {
+      await audioEngine.unlockAudio();
       audioEngine.setMasterVolume(volume);
       const isMultiTrack = sessionTracks.length > 1;
-      audioEngine.playTrack(currentTrack.synthTheme || 'morning_raga', currentTrack.audioUrl, !isMultiTrack);
+      const targetAudioUrl = stationSettings.customStreamUrl || currentTrack.audioUrl;
+      audioEngine.playTrack(currentTrack.synthTheme || 'morning_raga', targetAudioUrl, !isMultiTrack);
       setIsPlaying(true);
     }
-  }, [isPlaying, volume, currentTrack, sessionTracks.length]);
+  }, [isPlaying, volume, currentTrack, sessionTracks.length, stationSettings.customStreamUrl]);
 
   // Studio Master On-Air toggle
   const handleToggleOnAir = () => {
@@ -597,7 +599,8 @@ export default function App() {
   };
 
   // Play specific track or program
-  const handlePlayProgram = (prog: ScheduledProgram) => {
+  const handlePlayProgram = async (prog: ScheduledProgram) => {
+    await audioEngine.unlockAudio();
     setCurrentProgram(prog);
     setBroadcastMode(prog.type);
 
@@ -627,7 +630,8 @@ export default function App() {
     setCurrentTab('player');
   };
 
-  const handlePlayTrackOnDemand = (track: AudioTrack) => {
+  const handlePlayTrackOnDemand = async (track: AudioTrack) => {
+    await audioEngine.unlockAudio();
     setSessionTracks([track]);
     setCurrentTrackIndex(0);
     setCurrentTrack(track);

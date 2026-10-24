@@ -61,6 +61,17 @@ class RadioAudioEngine {
     }
   }
 
+  public async unlockAudio(): Promise<void> {
+    this.initContext();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try {
+        await this.ctx.resume();
+      } catch (e) {
+        console.warn('AudioContext resume error:', e);
+      }
+    }
+  }
+
   public getContext(): AudioContext | null {
     return this.ctx;
   }
@@ -72,6 +83,9 @@ class RadioAudioEngine {
   public setMasterVolume(vol: number) {
     if (this.masterGain && this.ctx) {
       this.masterGain.gain.setTargetAtTime(Math.max(0, Math.min(1, vol)), this.ctx.currentTime, 0.05);
+    }
+    if (this.currentHtmlAudio) {
+      this.currentHtmlAudio.volume = Math.max(0, Math.min(1, vol));
     }
   }
 
@@ -100,6 +114,9 @@ class RadioAudioEngine {
   // --- AUDIO PLAYBACK (GENERATIVE OR FILE) ---
   public playTrack(theme: string = 'morning_raga', audioUrl?: string, loop: boolean = true) {
     this.initContext();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
     this.stopMusic();
     this.isPlaying = true;
 
@@ -120,11 +137,14 @@ class RadioAudioEngine {
       this.currentHtmlAudio = null;
     }
 
-    const audio = new Audio(url);
-    if (!url.startsWith('blob:')) {
+    const audio = new Audio();
+    if (!url.startsWith('blob:') && !url.startsWith('data:') && !url.startsWith('/')) {
       audio.crossOrigin = 'anonymous';
     }
+    audio.src = url;
     audio.loop = loop;
+    audio.preload = 'auto';
+
     audio.onended = () => {
       if (this.onTrackEndedCallback) {
         this.onTrackEndedCallback();
@@ -135,13 +155,18 @@ class RadioAudioEngine {
       this.htmlAudioSource = this.ctx.createMediaElementSource(audio);
       this.htmlAudioSource.connect(this.musicGain);
     } catch (e) {
-      console.warn('MediaElementSource error:', e);
+      console.warn('MediaElementSource fallback:', e);
     }
 
-    audio.play().catch((err) => {
-      console.warn('Audio play error, falling back to generative theme:', err);
-      this.startSynthesizedTheme('evening_melody');
-    });
+    audio.volume = this.masterGain ? this.masterGain.gain.value : 0.85;
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        console.warn('Audio play error, falling back to generative theme:', err);
+        this.startSynthesizedTheme('evening_melody');
+      });
+    }
 
     this.currentHtmlAudio = audio;
   }

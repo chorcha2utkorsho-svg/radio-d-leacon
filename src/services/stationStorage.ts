@@ -331,6 +331,7 @@ export const DEFAULT_STATION_SETTINGS: StationSettings = {
   contactEmail: 'contact@radiodleacon.com',
   contactPhone: '+880 1700-000000',
   websiteUrl: 'https://radiodleacon.com',
+  customStreamUrl: '',
 };
 
 const SETTINGS_KEY = 'radio_dleacon_settings';
