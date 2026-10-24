@@ -32,8 +32,10 @@ import {
   Eye,
   MessageSquare,
   AlertCircle,
+  RotateCw,
 } from 'lucide-react';
 import { audioEngine } from '../../services/audioEngine';
+import { updateBroadcasterPasscode } from '../../services/authSecurity';
 import { ScheduledProgram, AudioTrack, SongRequest, ChatMessage, BroadcastType } from '../../types/radio';
 import { AudioVisualizerCanvas } from '../Player/AudioVisualizerCanvas';
 
@@ -68,6 +70,9 @@ interface BroadcasterDashboardProps {
   listenerCount: number;
   onViewListenerPortal: () => void;
   onLogout: () => void;
+  onStartAutoPilot?: (customTracks?: AudioTrack[]) => void;
+  isAutoPilotActive?: boolean;
+  onOpenCMS?: () => void;
 }
 
 export const BroadcasterDashboard: React.FC<BroadcasterDashboardProps> = ({
@@ -101,6 +106,9 @@ export const BroadcasterDashboard: React.FC<BroadcasterDashboardProps> = ({
   listenerCount,
   onViewListenerPortal,
   onLogout,
+  onStartAutoPilot,
+  isAutoPilotActive = false,
+  onOpenCMS,
 }) => {
   const [micLevel, setMicLevel] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<'playout' | 'schedule' | 'sessions' | 'requests' | 'chat' | 'git'>('playout');
@@ -195,13 +203,14 @@ export const BroadcasterDashboard: React.FC<BroadcasterDashboardProps> = ({
     setTimeout(() => setStatusNotification(null), 2000);
   };
 
-  const handleSavePin = (e: React.FormEvent) => {
+  const handleSavePin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customPin.trim() || customPin.trim().length < 4) {
-      alert('অনুগ্রহ করে কমপক্ষে ৪ সংখ্যার পিন কোড দিন!');
+    if (!customPin.trim() || customPin.trim().length < 6) {
+      alert('অনুগ্রহ করে কমপক্ষে ৬ অক্ষরের নিরাপদ পাসকোড দিন!');
       return;
     }
-    localStorage.setItem('radio_dleacon_broadcaster_pin', customPin.trim());
+    await updateBroadcasterPasscode(customPin.trim());
+    setCustomPin('');
     setPinSavedToast(true);
     setTimeout(() => setPinSavedToast(false), 3000);
   };
@@ -263,6 +272,18 @@ export const BroadcasterDashboard: React.FC<BroadcasterDashboardProps> = ({
                 {listenerCount} জন
               </span>
             </div>
+
+            {/* Station CMS Button */}
+            {onOpenCMS && (
+              <button
+                onClick={onOpenCMS}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer border border-amber-500/40"
+                title="স্টেশন কনটেন্ট ও শিডিউল ম্যানেজমেন্ট সিস্টেম (CMS) খুলুন"
+              >
+                <Layers className="w-4 h-4 text-amber-400" />
+                <span>স্টেশন সিএমএস (CMS)</span>
+              </button>
+            )}
 
             {/* Switch to Public View button */}
             <button
@@ -649,6 +670,42 @@ export const BroadcasterDashboard: React.FC<BroadcasterDashboardProps> = ({
               </div>
             </div>
 
+            {/* Auto-Pilot 24/7 Continuous Replay Card */}
+            <div className="bg-gradient-to-r from-amber-950/40 via-slate-900 to-emerald-950/40 border border-amber-500/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
+                  <Radio className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>সারাদিনের অটো-পাইলট মোড (Auto-DJ Replay)</span>
+                    {isAutoPilotActive && (
+                      <span className="text-[10px] bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded-full animate-pulse">
+                        সক্রিয়
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    আজকে লাইভে না আসলে এই বাটনে ক্লিক করুন—আপনার আপলোড করা গানগুলো সারাদিন একটির পর একটি স্বয়ংক্রিয়ভাবে অন-এয়ার বাজতে থাকবে।
+                  </p>
+                </div>
+              </div>
+
+              {onStartAutoPilot && (
+                <button
+                  onClick={() => onStartAutoPilot()}
+                  className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shrink-0 shadow-md flex items-center gap-2 ${
+                    isAutoPilotActive
+                      ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 ring-2 ring-emerald-400/50'
+                      : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                  }`}
+                >
+                  <RotateCw className={`w-4 h-4 ${isAutoPilotActive ? 'animate-spin' : ''}`} />
+                  <span>{isAutoPilotActive ? 'অটো-পাইলট চলছে' : 'সারাদিন অটো-রিপ্লে চালান'}</span>
+                </button>
+              )}
+            </div>
+
             {/* Session Playout Queue List */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between">
@@ -794,13 +851,30 @@ export const BroadcasterDashboard: React.FC<BroadcasterDashboardProps> = ({
               </p>
             </div>
 
-            <button
-              onClick={onOpenUploadModal}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors cursor-pointer shadow-md shadow-amber-500/20"
-            >
-              <Upload className="w-4 h-4" />
-              <span>+ নতুন অধিবেশন ও গান আপলোড</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {onStartAutoPilot && (
+                <button
+                  onClick={() => onStartAutoPilot()}
+                  className={`flex items-center gap-2 px-4 py-2 font-bold text-xs rounded-xl transition-all cursor-pointer shadow-md ${
+                    isAutoPilotActive
+                      ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 ring-2 ring-emerald-400/50'
+                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  }`}
+                  title="আপনার আপলোড করা সমস্ত গান একটার পর একটা ধারাবাহিকভাবে অটো-রিপ্লে চালান"
+                >
+                  <RotateCw className={`w-4 h-4 ${isAutoPilotActive ? 'animate-spin' : ''}`} />
+                  <span>{isAutoPilotActive ? 'অটো-পাইলট মোড চলছে' : '☀️ সব অডিও দিয়ে অটো-রিপ্লে'}</span>
+                </button>
+              )}
+
+              <button
+                onClick={onOpenUploadModal}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors cursor-pointer shadow-md shadow-amber-500/20"
+              >
+                <Upload className="w-4 h-4" />
+                <span>+ নতুন অধিবেশন ও গান আপলোড</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1013,7 +1087,7 @@ export const BroadcasterDashboard: React.FC<BroadcasterDashboardProps> = ({
                 <span>আরজে / ব্রডকাস্টার স্টুডিও পাসকোড পরিবর্তন</span>
               </h4>
               <p className="text-xs text-slate-400 mt-0.5">
-                শ্রোতারা যেন এই ড্যাশবোর্ডে ঢুকতে না পারে, তার জন্য আপনার পছন্দমতো নতুন গোপন কোড দিন (ডিফল্ট: 1234)
+                স্টেশনের শতভাগ গোপনীয়তা রক্ষার্থে আপনার পছন্দমতো শক্তিশালী নতুন পাসকোড সেট করতে পারেন (SHA-256 এনক্রিপ্টেড)
               </p>
             </div>
 

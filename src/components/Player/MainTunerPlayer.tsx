@@ -17,9 +17,18 @@ import {
   SkipForward,
   SkipBack,
   ListMusic,
+  BarChart2,
+  Waves,
+  RotateCw,
+  LayoutGrid,
+  SlidersHorizontal,
+  Gauge,
+  Bell,
+  BellRing,
 } from 'lucide-react';
 import { ScheduledProgram, AudioTrack, BroadcastType } from '../../types/radio';
 import { AudioVisualizerCanvas } from './AudioVisualizerCanvas';
+import { CssAudioVisualizer, VisualizerStyle, ColorPalette } from './CssAudioVisualizer';
 
 interface MainTunerPlayerProps {
   isPlaying: boolean;
@@ -43,6 +52,10 @@ interface MainTunerPlayerProps {
   onSelectSessionTrack?: (index: number) => void;
   onNextTrack?: () => void;
   onPrevTrack?: () => void;
+  isAutoPilotActive?: boolean;
+  onStartAutoPilot?: () => void;
+  isNextProgramReminderSet?: boolean;
+  onToggleNextProgramReminder?: () => void;
 }
 
 export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
@@ -67,6 +80,10 @@ export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
   onSelectSessionTrack,
   onNextTrack,
   onPrevTrack,
+  isAutoPilotActive = false,
+  onStartAutoPilot,
+  isNextProgramReminderSet = false,
+  onToggleNextProgramReminder,
 }) => {
   const [showQueue, setShowQueue] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -74,6 +91,18 @@ export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
   const [reactionHearts, setReactionHearts] = useState(142);
   const [hasHearted, setHasHearted] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
+  const [visualizerStyle, setVisualizerStyle] = useState<VisualizerStyle>('bars');
+  const [visualizerSensitivity, setVisualizerSensitivity] = useState<number>(1.2);
+  const [visualizerPalette, setVisualizerPalette] = useState<ColorPalette>('dynamic');
+
+  const cycleVisualizerStyle = () => {
+    setVisualizerStyle((prev) => {
+      if (prev === 'bars') return 'wave';
+      if (prev === 'wave') return 'circular';
+      if (prev === 'circular') return 'led';
+      return 'bars';
+    });
+  };
 
   const toggleMute = () => {
     if (isMuted) {
@@ -153,8 +182,15 @@ export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
                 <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
                   <Radio className={`w-5 h-5 text-amber-400 ${isPlaying ? 'animate-pulse' : ''}`} />
                 </div>
-                <div className="flex-1 h-10 overflow-hidden">
-                  <AudioVisualizerCanvas isPlaying={isPlaying} mode="bars" />
+                <div className="flex-1 h-10 overflow-hidden flex items-center">
+                  <CssAudioVisualizer
+                    isPlaying={isPlaying}
+                    barCount={16}
+                    variant="compact"
+                    colorScheme={visualizerPalette}
+                    sensitivity={visualizerSensitivity}
+                    className="w-full"
+                  />
                 </div>
               </div>
             </div>
@@ -265,6 +301,198 @@ export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* CSS-based Real-time Audio Frequency Visualizer with Style Toggle */}
+            <div className="mb-6 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                  <BarChart2 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>লাইভ অডিও ভিজ্যুয়ালাইজার (Real-time Audio Visualizer)</span>
+                </span>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Style Toggle Button (Cycles through styles) */}
+                  <button
+                    onClick={cycleVisualizerStyle}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-95"
+                    title="ভিজ্যুয়ালাইজার স্টাইল টগল করুন (বার্স → ওয়েভ → সার্কুলার → এলইডি)"
+                  >
+                    <RotateCw className="w-3 h-3 text-amber-400" />
+                    <span>স্টাইল টগল</span>
+                  </button>
+
+                  {/* Segmented direct buttons */}
+                  <div className="flex items-center bg-slate-900 border border-slate-800 p-0.5 rounded-lg text-[10px]">
+                    <button
+                      onClick={() => setVisualizerStyle('bars')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded font-medium transition-colors cursor-pointer ${
+                        visualizerStyle === 'bars'
+                          ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="ফ্রিকোয়েন্সি স্পেকট্রাম বার্স"
+                    >
+                      <BarChart2 className="w-3 h-3" />
+                      <span>বার্স</span>
+                    </button>
+
+                    <button
+                      onClick={() => setVisualizerStyle('wave')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded font-medium transition-colors cursor-pointer ${
+                        visualizerStyle === 'wave'
+                          ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="অসিলোস্কোপ সাউন্ড ওয়েভ"
+                    >
+                      <Waves className="w-3 h-3" />
+                      <span>ওয়েভ</span>
+                    </button>
+
+                    <button
+                      onClick={() => setVisualizerStyle('circular')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded font-medium transition-colors cursor-pointer ${
+                        visualizerStyle === 'circular'
+                          ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="বৃত্তাকার রেডিয়াল স্পেকট্রাম"
+                    >
+                      <Disc3 className="w-3 h-3" />
+                      <span>সার্কুলার</span>
+                    </button>
+
+                    <button
+                      onClick={() => setVisualizerStyle('led')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded font-medium transition-colors cursor-pointer ${
+                        visualizerStyle === 'led'
+                          ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="অ্যানালগ এলইডি র্যাক"
+                    >
+                      <LayoutGrid className="w-3 h-3" />
+                      <span>এলইডি</span>
+                    </button>
+                  </div>
+
+                  {/* Palette Selector (Dynamic intensity scaling) */}
+                  <div className="flex items-center bg-slate-900 border border-slate-800 p-0.5 rounded-lg text-[10px]">
+                    <button
+                      onClick={() => setVisualizerPalette('dynamic')}
+                      className={`flex items-center gap-1 px-2 py-1 rounded font-medium transition-colors cursor-pointer ${
+                        visualizerPalette === 'dynamic'
+                          ? 'bg-emerald-500 text-slate-950 font-bold shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="ডাইনামিক কালার স্কেলিং: তীব্রতা অনুযায়ী কালার পরিবর্তন (পান্না → অ্যাম্বার → কমলা → লাল)"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+                      <span>ডাইনামিক</span>
+                    </button>
+
+                    <button
+                      onClick={() => setVisualizerPalette('fire')}
+                      className={`flex items-center gap-1 px-2 py-1 rounded font-medium transition-colors cursor-pointer ${
+                        visualizerPalette === 'fire'
+                          ? 'bg-orange-500 text-slate-950 font-bold shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="ফায়ার কালার স্কেল"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-400 inline-block"></span>
+                      <span>ফায়ার</span>
+                    </button>
+
+                    <button
+                      onClick={() => setVisualizerPalette('neon')}
+                      className={`flex items-center gap-1 px-2 py-1 rounded font-medium transition-colors cursor-pointer ${
+                        visualizerPalette === 'neon'
+                          ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="সাইবার নিয়ন কালার স্কেল"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block"></span>
+                      <span>নিয়ন</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Visualizer Sensitivity Slider Controller */}
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950/70 border border-slate-800/80 rounded-xl px-3 py-2 text-xs">
+                <div className="flex items-center gap-2 text-slate-300 shrink-0">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="font-medium">বার্স সংবেদনশীলতা (Sensitivity):</span>
+                  <span className="font-mono font-bold text-amber-300 text-[11px] bg-slate-900 border border-slate-800 px-2 py-0.5 rounded tabular-nums">
+                    {Math.round(visualizerSensitivity * 100)}% ({visualizerSensitivity.toFixed(1)}x)
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-1 min-w-[170px] max-w-xs">
+                  <span className="text-[10px] text-slate-400 font-mono">০.৪x</span>
+                  <input
+                    type="range"
+                    min="0.4"
+                    max="2.5"
+                    step="0.1"
+                    value={visualizerSensitivity}
+                    onChange={(e) => setVisualizerSensitivity(parseFloat(e.target.value))}
+                    className="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                    title="ভিজ্যুয়ালাইজার রেসপন্স সংবেদনশীলতা পরিবর্তন করুন"
+                    aria-label="ভিজ্যুয়ালাইজার সংবেদনশীলতা"
+                  />
+                  <span className="text-[10px] text-slate-400 font-mono">২.৫x</span>
+                </div>
+
+                {/* Preset Fast Buttons */}
+                <div className="flex items-center gap-1 text-[10px] font-mono">
+                  <button
+                    onClick={() => setVisualizerSensitivity(0.7)}
+                    className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                      visualizerSensitivity === 0.7
+                        ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50 font-bold'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800/60'
+                    }`}
+                    title="শান্ত / কোমল রেসপন্স"
+                  >
+                    শান্ত
+                  </button>
+                  <button
+                    onClick={() => setVisualizerSensitivity(1.2)}
+                    className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                      visualizerSensitivity === 1.2
+                        ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50 font-bold'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800/60'
+                    }`}
+                    title="স্বাভাবিক ব্যালান্সড রেসপন্স"
+                  >
+                    স্বাভাবিক
+                  </button>
+                  <button
+                    onClick={() => setVisualizerSensitivity(2.0)}
+                    className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                      visualizerSensitivity === 2.0
+                        ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50 font-bold'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800/60'
+                    }`}
+                    title="হাইপার ডাইনামিক রেসপন্স"
+                  >
+                    ডাইনামিক
+                  </button>
+                </div>
+              </div>
+
+              <CssAudioVisualizer
+                isPlaying={isPlaying}
+                barCount={28}
+                variant={visualizerStyle}
+                colorScheme={visualizerPalette}
+                sensitivity={visualizerSensitivity}
+                showLabels={true}
+              />
             </div>
 
             {/* Bottom Interaction & Controls Section */}
@@ -452,6 +680,30 @@ export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
               <span className="font-mono text-amber-400 tabular-nums">
                 {nextProgram.startTime} - {nextProgram.endTime}
               </span>
+
+              {onToggleNextProgramReminder && (
+                <button
+                  onClick={onToggleNextProgramReminder}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                    isNextProgramReminderSet
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700'
+                  }`}
+                  title={
+                    isNextProgramReminderSet
+                      ? '৫-মিনিট রিমাইন্ডার সেট করা আছে (ক্লিক করে বাদ দিন)'
+                      : 'শুরু হওয়ার ৫ মিনিট পূর্বে সতর্কবার্তা পেতে ক্লিক করুন'
+                  }
+                >
+                  {isNextProgramReminderSet ? (
+                    <BellRing className="w-3.5 h-3.5 text-amber-400" />
+                  ) : (
+                    <Bell className="w-3.5 h-3.5" />
+                  )}
+                  <span>{isNextProgramReminderSet ? 'রিমাইন্ডার সক্রিয়' : '৫-মিনিট অ্যালার্ট'}</span>
+                </button>
+              )}
+
               <button
                 onClick={onViewSchedule}
                 className="text-slate-400 hover:text-white underline underline-offset-2 cursor-pointer transition-colors"

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Radio, Sliders, Volume2, Upload } from 'lucide-react';
+import { Radio, Sliders, Volume2, Upload, Bell } from 'lucide-react';
 
 interface HeaderProps {
   currentTab: 'player' | 'schedule' | 'archive' | 'requests';
@@ -9,6 +9,9 @@ interface HeaderProps {
   isOnAir: boolean;
   listenerCount: number;
   isBroadcasterAuthenticated?: boolean;
+  onOpenCMS?: () => void;
+  onOpenNotifications?: () => void;
+  activeReminderCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,6 +22,9 @@ export const Header: React.FC<HeaderProps> = ({
   isOnAir,
   listenerCount,
   isBroadcasterAuthenticated = false,
+  onOpenCMS,
+  onOpenNotifications,
+  activeReminderCount = 0,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
@@ -117,6 +123,34 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="font-mono tabular-nums text-slate-200">{listenerCount}</span>
             <span>শ্রোতা যুক্ত</span>
           </div>
+
+          {onOpenNotifications && (
+            <button
+              onClick={onOpenNotifications}
+              className="relative p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-amber-400 border border-slate-800 hover:border-amber-500/30 transition-all cursor-pointer"
+              title="৫-মিনিট সম্প্রচার সতর্কতা ও রিমাইন্ডার সেটিংস"
+              aria-label="নোটিফিকেশন ও রিমাইন্ডার"
+            >
+              <Bell className="w-4 h-4" />
+              {activeReminderCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-bold text-[9px] flex items-center justify-center shadow-sm">
+                  {activeReminderCount > 9 ? '9+' : activeReminderCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {onOpenCMS && (
+            <button
+              onClick={onOpenCMS}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-300 border border-slate-800 hover:border-amber-500/40 transition-all cursor-pointer whitespace-nowrap shrink-0"
+              title="স্টেশন কনটেন্ট ও শিডিউল ম্যানেজমেন্ট সিস্টেম (CMS)"
+            >
+              <Upload className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">স্টেশন সিএমএস</span>
+              <span className="sm:hidden">CMS</span>
+            </button>
+          )}
 
           <button
             onClick={onToggleStudioMode}

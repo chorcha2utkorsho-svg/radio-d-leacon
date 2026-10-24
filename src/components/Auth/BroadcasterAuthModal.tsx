@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Lock, X, Radio, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
+import { Lock, X, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
+import { verifyBroadcasterPasscode, setBroadcasterAuthenticated } from '../../services/authSecurity';
 
 interface BroadcasterAuthModalProps {
   isOpen: boolean;
@@ -15,23 +16,29 @@ export const BroadcasterAuthModal: React.FC<BroadcasterAuthModalProps> = ({
   const [passkey, setPasskey] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const storedPin = localStorage.getItem('radio_dleacon_broadcaster_pin') || '1234';
+    if (!passkey.trim()) return;
 
-    if (passkey.trim() === storedPin) {
-      if (rememberMe) {
-        localStorage.setItem('radio_dleacon_auth_token', 'broadcaster_authenticated');
+    setIsVerifying(true);
+    try {
+      const isValid = await verifyBroadcasterPasscode(passkey);
+      if (isValid) {
+        setBroadcasterAuthenticated(rememberMe);
+        setErrorMsg('');
+        setPasskey('');
+        onSuccess();
       } else {
-        sessionStorage.setItem('radio_dleacon_auth_token', 'broadcaster_authenticated');
+        setErrorMsg('ভুল পাসকোড! সঠিক পাসকোড দিয়ে পুনরায় চেষ্টা করুন।');
       }
-      setErrorMsg('');
-      onSuccess();
-    } else {
-      setErrorMsg('ভুল পাসকোড! ডিফল্ট পাসকোড: 1234');
+    } catch {
+      setErrorMsg('পাসকোড যাচাই করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -62,14 +69,11 @@ export const BroadcasterAuthModal: React.FC<BroadcasterAuthModalProps> = ({
           <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs text-slate-300 space-y-1.5">
             <div className="flex items-center gap-2 text-amber-400 font-semibold">
               <ShieldCheck className="w-4 h-4" />
-              <span>স্টুডিও অ্যাক্সেস নিয়ন্ত্রণ</span>
+              <span>স্টুডিও অ্যাক্সেস নিয়ন্ত্রণ ও শতভাগ গোপনীয়তা</span>
             </div>
             <p className="text-slate-400 leading-relaxed">
-              শ্রোতারা সরাসরি সম্প্রচার নিয়ন্ত্রণ বা অডিও ফাইল পরিবর্তন করতে পারবেন না। স্টেশন পরিচালনার জন্য আরজে পাসকোড প্রবেশ করান।
+              এই ড্যাশবোর্ডটি শুধুমাত্র অনুমোদিত আরজে ও স্টেশন অপারেটরদের জন্য সুরক্ষিত। স্টেশন পরিচালনার জন্য আপনার পাসকোডটি প্রবেশ করান।
             </p>
-            <div className="text-[11px] text-slate-400 pt-1 font-mono">
-              ডিফল্ট আরজে পাসকোড: <span className="text-amber-300 font-bold">1234</span>
-            </div>
           </div>
 
           <div>
@@ -86,11 +90,11 @@ export const BroadcasterAuthModal: React.FC<BroadcasterAuthModalProps> = ({
                 setPasskey(e.target.value);
                 setErrorMsg('');
               }}
-              placeholder="পাসকোড দিন (যেমন: 1234)"
+              placeholder="গোপন পাসকোড লিখুন"
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-mono text-white tracking-widest text-center focus:outline-none focus:border-amber-500 transition-colors"
             />
             {errorMsg && (
-              <p className="text-xs text-red-400 mt-1.5 text-center">{errorMsg}</p>
+              <p className="text-xs text-red-400 mt-2 text-center font-medium">{errorMsg}</p>
             )}
           </div>
 

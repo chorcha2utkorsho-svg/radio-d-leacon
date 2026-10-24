@@ -656,15 +656,16 @@ export const AudioUploadModal: React.FC<AudioUploadModalProps> = ({
                 সংরক্ষণ করুন
               </button>
 
-              {/* Play Immediately On-Air */}
+              {/* Play Immediately On-Air in Continuous Loop */}
               <button
                 type="button"
                 disabled={isProcessing || songList.length === 0}
                 onClick={() => handleSubmit(true)}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/20 active:scale-95"
+                title="কোনো শিডিউল নির্ধারণ ছাড়াই গানগুলো একের পর এক নিরবচ্ছিন্ন লুপে অন-এয়ার বাজবে"
               >
                 <Radio className="w-4 h-4" />
-                <span>এখনই এই অধিবেশন অন-এয়ার বাজান</span>
+                <span>এখনই নন-স্টপ লুপে অন-এয়ার বাজান</span>
               </button>
             </div>
           </div>

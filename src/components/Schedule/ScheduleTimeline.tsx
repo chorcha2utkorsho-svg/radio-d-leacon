@@ -17,6 +17,10 @@ interface ScheduleTimelineProps {
   currentProgramId: string;
   onPlayProgram: (prog: ScheduledProgram) => void;
   onOpenAddSchedule?: () => void;
+  subscribedProgramIds?: string[];
+  onToggleReminder?: (progId: string, title: string) => void;
+  onOpenNotificationSettings?: () => void;
+  notifyAllPrograms?: boolean;
 }
 
 const DAYS_BN = [
@@ -34,20 +38,34 @@ export const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({
   currentProgramId,
   onPlayProgram,
   onOpenAddSchedule,
+  subscribedProgramIds = [],
+  onToggleReminder,
+  onOpenNotificationSettings,
+  notifyAllPrograms = false,
 }) => {
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
   const [selectedCategory, setSelectedCategory] = useState<string>('সব');
-  const [reminders, setReminders] = useState<Record<string, boolean>>({});
+  const [localReminders, setLocalReminders] = useState<Record<string, boolean>>({});
   const [reminderToast, setReminderToast] = useState<string | null>(null);
 
-  const toggleReminder = (id: string, title: string) => {
-    const nextState = !reminders[id];
-    setReminders((prev) => ({ ...prev, [id]: nextState }));
-
-    if (nextState) {
-      setReminderToast(`"${title}" অনুষ্ঠানের সম্প্রচারের পূর্বে আপনাকে মনে করিয়ে দেওয়া হবে!`);
-      setTimeout(() => setReminderToast(null), 3000);
+  const handleToggle = (id: string, title: string) => {
+    if (onToggleReminder) {
+      onToggleReminder(id, title);
+    } else {
+      const nextState = !localReminders[id];
+      setLocalReminders((prev) => ({ ...prev, [id]: nextState }));
+      if (nextState) {
+        setReminderToast(`"${title}" অনুষ্ঠানের সম্প্রচারের ৫ মিনিট পূর্বে আপনাকে মনে করিয়ে দেওয়া হবে!`);
+        setTimeout(() => setReminderToast(null), 3000);
+      }
     }
+  };
+
+  const isReminderActive = (id: string) => {
+    if (onToggleReminder) {
+      return subscribedProgramIds.includes(id) || notifyAllPrograms;
+    }
+    return !!localReminders[id];
   };
 
   const filteredPrograms = schedules.filter((prog) => {
@@ -73,15 +91,28 @@ export const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({
             </p>
           </div>
 
-          {onOpenAddSchedule && (
-            <button
-              onClick={onOpenAddSchedule}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs rounded-xl transition-colors cursor-pointer shrink-0"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>নতুন শো শিডিউল করুন</span>
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {onOpenNotificationSettings && (
+              <button
+                onClick={onOpenNotificationSettings}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 font-medium text-xs rounded-xl border border-amber-500/30 transition-all cursor-pointer shrink-0"
+                title="৫ মিনিট পূর্বে অ্যালার্ট ও নোটিফিকেশন সেটিংস"
+              >
+                <BellRing className="w-3.5 h-3.5 text-amber-400" />
+                <span>৫-মিনিট রিমাইন্ডার সেটিংস</span>
+              </button>
+            )}
+
+            {onOpenAddSchedule && (
+              <button
+                onClick={onOpenAddSchedule}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs rounded-xl transition-colors cursor-pointer shrink-0"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>নতুন শো শিডিউল করুন</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Days of Week Tab Buttons */}
@@ -146,7 +177,7 @@ export const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({
         ) : (
           filteredPrograms.map((prog) => {
             const isNowPlaying = prog.id === currentProgramId;
-            const hasReminder = !!reminders[prog.id];
+            const hasReminder = isReminderActive(prog.id);
 
             return (
               <div
@@ -203,13 +234,13 @@ export const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({
                   {/* Actions: Listen / Reminder */}
                   <div className="flex items-center gap-2.5 self-end sm:self-center shrink-0">
                     <button
-                      onClick={() => toggleReminder(prog.id, prog.title)}
+                      onClick={() => handleToggle(prog.id, prog.title)}
                       className={`p-2 rounded-lg text-xs transition-colors cursor-pointer border ${
                         hasReminder
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
                           : 'bg-slate-800/80 text-slate-400 hover:text-white border-slate-700/60'
                       }`}
-                      title={hasReminder ? 'রিমাইন্ডার বন্ধ করুন' : 'অনুষ্ঠানের জন্য রিমাইন্ডার সেট করুন'}
+                      title={hasReminder ? '৫-মিনিট রিমাইন্ডার সক্রিয় (ক্লিক করে বন্ধ করুন)' : 'এই অনুষ্ঠানের ৫ মিনিট পূর্বে রিমাইন্ডার সেট করুন'}
                     >
                       {hasReminder ? (
                         <BellRing className="w-4 h-4 text-amber-400" />

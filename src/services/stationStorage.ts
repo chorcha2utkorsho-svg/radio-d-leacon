@@ -1,4 +1,4 @@
-import { ScheduledProgram, AudioTrack, SongRequest, ChatMessage } from '../types/radio';
+import { ScheduledProgram, AudioTrack, SongRequest, ChatMessage, StationSettings } from '../types/radio';
 
 // Use the generated assets
 export const IMAGES = {
@@ -315,6 +315,41 @@ export function loadSavedRequests(): SongRequest[] {
 export function saveRequests(requests: SongRequest[]) {
   try {
     localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(requests));
+  } catch {
+    // ignore
+  }
+}
+
+export const DEFAULT_STATION_SETTINGS: StationSettings = {
+  stationName: 'রেডিও ডি-লিকন',
+  tagline: 'সুর ও কথামালায় জীবনের রঙ',
+  frequency: 'FM 98.4 / HD Stream',
+  announcementTicker: 'রেডিও ডি-লিকনে আপনাকে স্বাগতম! ২৪ ঘণ্টা নিরবচ্ছিন্ন বাংলা গান, আবৃত্তি ও তথ্যবহুল অনুষ্ঠান শুনতে সঙ্গে থাকুন।',
+  isTickerActive: true,
+  autoPilotEnabled: false,
+  defaultBitrate: '320k',
+  contactEmail: 'contact@radiodleacon.com',
+  contactPhone: '+880 1700-000000',
+  websiteUrl: 'https://radiodleacon.com',
+};
+
+const SETTINGS_KEY = 'radio_dleacon_settings';
+
+export function loadSavedStationSettings(): StationSettings {
+  try {
+    const data = localStorage.getItem(SETTINGS_KEY);
+    if (data) {
+      return { ...DEFAULT_STATION_SETTINGS, ...JSON.parse(data) };
+    }
+  } catch {
+    // fallback
+  }
+  return DEFAULT_STATION_SETTINGS;
+}
+
+export function saveStationSettings(settings: StationSettings) {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch {
     // ignore
   }
