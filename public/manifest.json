@@ -1,0 +1,55 @@
+{
+  "id": "/",
+  "name": "রেডিও ডি-লিকন | Radio D-Leacon",
+  "short_name": "রেডিও ডি-লিকন",
+  "description": "রেডিও ডি-লিকন – সহজ অনলাইন লাইভ ও শিডিউলড অডিও স্ট্রিমিং রেডিও স্টেশন।",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "categories": ["music", "entertainment", "news"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "এখন সম্প্রচার (Live Tuner)",
+      "short_name": "লাইভ",
+      "description": "রেডিও ডি-লিকন সরাসরি সম্প্রচার শুনুন",
+      "url": "/?tab=player",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "প্রোগ্রাম শিডিউল (Schedule)",
+      "short_name": "শিডিউল",
+      "description": "আজকের অনুষ্ঠানের সময়সূচী দেখুন",
+      "url": "/?tab=schedule",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

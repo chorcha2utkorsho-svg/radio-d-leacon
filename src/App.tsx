@@ -55,6 +55,7 @@ import {
   formatSecondsToCountdown,
 } from './services/notificationService';
 import { Sparkles, Bell, BellRing } from 'lucide-react';
+import { OfflineIndicator } from './components/PWA/OfflineIndicator';
 
 export default function App() {
   // Station State
@@ -1133,6 +1134,9 @@ export default function App() {
         schedules={schedules}
         onTriggerTestAlert={handleTriggerTestAlert}
       />
+
+      {/* Offline Connectivity State Toast */}
+      <OfflineIndicator />
 
       {/* Footer */}
       <Footer />

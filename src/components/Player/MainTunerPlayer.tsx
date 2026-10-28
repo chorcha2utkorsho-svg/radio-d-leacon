@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Play,
   Pause,
@@ -25,6 +25,9 @@ import {
   Gauge,
   Bell,
   BellRing,
+  Moon,
+  Timer,
+  Clock,
 } from 'lucide-react';
 import { ScheduledProgram, AudioTrack, BroadcastType } from '../../types/radio';
 import { AudioVisualizerCanvas } from './AudioVisualizerCanvas';
@@ -94,6 +97,68 @@ export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
   const [visualizerStyle, setVisualizerStyle] = useState<VisualizerStyle>('bars');
   const [visualizerSensitivity, setVisualizerSensitivity] = useState<number>(1.2);
   const [visualizerPalette, setVisualizerPalette] = useState<ColorPalette>('dynamic');
+
+  // Sleep Timer Feature State (15, 30, 60 minutes)
+  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(null);
+  const [sleepTimeRemaining, setSleepTimeRemaining] = useState<number | null>(null); // in seconds
+  const [isSleepMenuOpen, setIsSleepMenuOpen] = useState(false);
+  const [sleepCompletedToast, setSleepCompletedToast] = useState(false);
+  const sleepMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // Close sleep timer popover on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sleepMenuRef.current && !sleepMenuRef.current.contains(e.target as Node)) {
+        setIsSleepMenuOpen(false);
+      }
+    };
+    if (isSleepMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSleepMenuOpen]);
+
+  // Sleep Timer countdown interval
+  useEffect(() => {
+    if (sleepTimeRemaining === null || sleepTimeRemaining <= 0) return;
+
+    const timer = setInterval(() => {
+      setSleepTimeRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          // Time expired! Stop audio playback automatically
+          if (isPlaying) {
+            onTogglePlay();
+          }
+          setSleepTimerMinutes(null);
+          setSleepCompletedToast(true);
+          setTimeout(() => setSleepCompletedToast(false), 6000);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [sleepTimeRemaining, isPlaying, onTogglePlay]);
+
+  const formatSleepCountdown = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const handleSetSleepTimer = (minutes: number | null) => {
+    setIsSleepMenuOpen(false);
+    if (minutes === null) {
+      setSleepTimerMinutes(null);
+      setSleepTimeRemaining(null);
+    } else {
+      setSleepTimerMinutes(minutes);
+      setSleepTimeRemaining(minutes * 60);
+    }
+  };
 
   const cycleVisualizerStyle = () => {
     setVisualizerStyle((prev) => {
@@ -630,6 +695,41 @@ export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
                 </div>
               </div>
 
+              {/* Active Sleep Timer Countdown Banner */}
+              {sleepTimeRemaining !== null && (
+                <div className="flex flex-wrap items-center justify-between gap-2.5 px-4 py-2.5 bg-indigo-950/60 border border-indigo-500/40 rounded-xl text-xs text-indigo-200 mt-4 animate-fade-in shadow-lg">
+                  <div className="flex items-center gap-2">
+                    <Moon className="w-4 h-4 text-indigo-400 fill-indigo-400 animate-pulse shrink-0" />
+                    <span>
+                      স্লিপ টাইমার সক্রিয়: <strong className="font-mono text-white text-sm tabular-nums bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-500/30">{formatSleepCountdown(sleepTimeRemaining)}</strong> মিনিট পর স্বয়ংক্রিয়ভাবে অডিও বন্ধ হবে
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleSetSleepTimer(null)}
+                    className="px-2.5 py-1 rounded-lg bg-indigo-500/20 hover:bg-red-500/20 text-indigo-300 hover:text-red-300 text-[11px] font-semibold transition-colors cursor-pointer border border-indigo-500/30 hover:border-red-500/40"
+                    title="স্লিপ টাইমার বাতিল করুন"
+                  >
+                    টাইমার বাতিল
+                  </button>
+                </div>
+              )}
+
+              {/* Sleep Timer Completed Notification */}
+              {sleepCompletedToast && (
+                <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border border-indigo-500/50 rounded-xl text-xs text-indigo-300 mt-4 animate-fade-in shadow-xl">
+                  <div className="flex items-center gap-2">
+                    <Moon className="w-4 h-4 text-indigo-400 shrink-0" />
+                    <span>😴 নির্ধারিত সময় সম্পন্ন হয়েছে — স্লিপ টাইমার রেডিও অডিও প্লেব্যাক বন্ধ করেছে। শুভরাত্রি!</span>
+                  </div>
+                  <button
+                    onClick={() => setSleepCompletedToast(false)}
+                    className="text-slate-400 hover:text-white text-xs cursor-pointer px-1.5 py-0.5 rounded hover:bg-slate-800"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
               {/* Interaction Strip: Song Request, Live Chat, Reaction, Share */}
               <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-slate-800/60 text-xs">
                 <div className="flex flex-wrap items-center gap-2">
@@ -659,6 +759,112 @@ export const MainTunerPlayer: React.FC<MainTunerPlayerProps> = ({
                     <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
                     <span>চ্যাট ও বার্তা</span>
                   </button>
+
+                  {/* Sleep Timer Popover Button */}
+                  <div className="relative" ref={sleepMenuRef}>
+                    <button
+                      onClick={() => setIsSleepMenuOpen(!isSleepMenuOpen)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                        sleepTimeRemaining !== null
+                          ? 'bg-indigo-500/25 text-indigo-200 border-indigo-500/50 shadow-sm font-semibold'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700/60'
+                      }`}
+                      title="অডিও প্লেব্যাক নির্দিষ্ট সময় পর স্বয়ংক্রিয়ভাবে বন্ধ করতে স্লিপ টাইমার সেট করুন"
+                      aria-label="স্লিপ টাইমার"
+                    >
+                      <Moon
+                        className={`w-3.5 h-3.5 ${
+                          sleepTimeRemaining !== null
+                            ? 'text-indigo-400 fill-indigo-400 animate-pulse'
+                            : 'text-indigo-300'
+                        }`}
+                      />
+                      <span>
+                        {sleepTimeRemaining !== null ? (
+                          <span className="flex items-center gap-1">
+                            <span>স্লিপ:</span>
+                            <span className="font-mono tabular-nums text-white font-bold">
+                              {formatSleepCountdown(sleepTimeRemaining)}
+                            </span>
+                          </span>
+                        ) : (
+                          'স্লিপ টাইমার'
+                        )}
+                      </span>
+                    </button>
+
+                    {isSleepMenuOpen && (
+                      <div className="absolute left-0 bottom-full mb-2 w-52 bg-slate-900 border border-slate-700/80 rounded-xl p-2.5 shadow-2xl z-30 space-y-1.5 animate-fade-in">
+                        <div className="text-[11px] font-bold text-slate-400 px-2 py-1 uppercase tracking-wider flex items-center justify-between border-b border-slate-800 pb-1.5">
+                          <span className="flex items-center gap-1.5">
+                            <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                            <span>স্লিপ টাইমার (Sleep)</span>
+                          </span>
+                          <span className="text-[10px] text-slate-500">অটো-পজ</span>
+                        </div>
+
+                        <button
+                          onClick={() => handleSetSleepTimer(15)}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                            sleepTimerMinutes === 15
+                              ? 'bg-indigo-500/25 text-indigo-200 font-bold border border-indigo-500/40'
+                              : 'hover:bg-slate-800 text-slate-200'
+                          }`}
+                        >
+                          <span>১৫ মিনিট (15 min)</span>
+                          {sleepTimerMinutes === 15 && (
+                            <span className="font-mono text-[11px] text-indigo-300 bg-indigo-900/60 px-1.5 py-0.5 rounded">
+                              {formatSleepCountdown(sleepTimeRemaining || 0)}
+                            </span>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => handleSetSleepTimer(30)}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                            sleepTimerMinutes === 30
+                              ? 'bg-indigo-500/25 text-indigo-200 font-bold border border-indigo-500/40'
+                              : 'hover:bg-slate-800 text-slate-200'
+                          }`}
+                        >
+                          <span>৩০ মিনিট (30 min)</span>
+                          {sleepTimerMinutes === 30 && (
+                            <span className="font-mono text-[11px] text-indigo-300 bg-indigo-900/60 px-1.5 py-0.5 rounded">
+                              {formatSleepCountdown(sleepTimeRemaining || 0)}
+                            </span>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => handleSetSleepTimer(60)}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                            sleepTimerMinutes === 60
+                              ? 'bg-indigo-500/25 text-indigo-200 font-bold border border-indigo-500/40'
+                              : 'hover:bg-slate-800 text-slate-200'
+                          }`}
+                        >
+                          <span>৬০ মিনিট (১ ঘণ্টা)</span>
+                          {sleepTimerMinutes === 60 && (
+                            <span className="font-mono text-[11px] text-indigo-300 bg-indigo-900/60 px-1.5 py-0.5 rounded">
+                              {formatSleepCountdown(sleepTimeRemaining || 0)}
+                            </span>
+                          )}
+                        </button>
+
+                        {sleepTimeRemaining !== null && (
+                          <div className="pt-1.5 mt-1 border-t border-slate-800">
+                            <button
+                              onClick={() => handleSetSleepTimer(null)}
+                              className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-red-400 hover:bg-red-500/15 cursor-pointer transition-colors font-medium flex items-center justify-between"
+                            >
+                              <span>টাইমার বন্ধ করুন</span>
+                              <span className="text-[10px] text-red-400">✕</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">

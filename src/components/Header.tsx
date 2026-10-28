@@ -1,5 +1,6 @@
 import React from 'react';
 import { Radio, Sliders, Volume2, Upload, Bell } from 'lucide-react';
+import { PWAInstallButton } from './PWA/PWAInstallButton';
 
 interface HeaderProps {
   currentTab: 'player' | 'schedule' | 'archive' | 'requests';
@@ -125,6 +126,9 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="font-mono tabular-nums text-slate-200">{listenerCount}</span>
             <span>শ্রোতা যুক্ত</span>
           </div>
+
+          {/* In-App PWA Install Button */}
+          <PWAInstallButton variant="header" />
 
           {onOpenNotifications && (
             <button
